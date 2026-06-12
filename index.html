@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="en" class="antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+  name="description"
+  content="Shopify development, tiktok Ad Account, product research, supplier sourcing, paid advertising, and eCommerce growth systems built to scale modern brands."
+/>  
+
+<meta
+  name="keywords"
+  content="Shopify Development, Meta Ads, TikTok Ads, TikTok Ad Account, Marketing, Product Research, Ecommerce Growth, Ecommerce Agency, Shopify Store Setup, Pakistan Ecommerce Agency"
+/>
+
+<meta name="author" content="Ecomify Media" />
+    <title>Ecomify Media | eComm Growth Architecture</title>
+  <link rel="icon" href="favicon.jpeg" />
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bgMain: '#090B10',
+                        surface: '#111827',
+                        elevated: '#182235',
+                        brandBlue: '#2563EB',
+                        brandBlueHover: '#1D4ED8',
+                        brandBlueGlow: '#60A5FA',
+                        brandGreen: '#22C55E',
+                        brandGreenGlow: '#4ADE80',
+                        brandGreenDark: '#16A34A',
+                        textMain: '#F8FAFC',
+                        textSec: '#CBD5E1',
+                        textMuted: '#64748B',
+                    },
+                    fontFamily: {
+                        sans: ['"Inter"', 'sans-serif'],
+                        display: ['"Space Grotesk"', 'sans-serif'],
+                    },
+                    letterSpacing: {
+                        'mega-tight': '-0.05em',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- GSAP & Lenis -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.29/bundled/lenis.min.js"></script>
+
+    <style>
+        body {
+            background-color: #090B10;
+            color: #F8FAFC;
+            overflow-x: hidden; /* Strict prevention of horizontal scroll */
+            cursor: none;
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Noise Overlay */
+        .noise-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: 9998;
+            opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3Cfilter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* PREMIUM CURSOR - Inversion Effect */
+        #cursor {
+            position: fixed;
+            top: 0; left: 0;
+            width: 12px; height: 12px;
+            background-color: white;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            mix-blend-mode: difference;
+            will-change: transform, width, height;
+            transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), 
+                        height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        #cursor.hovered {
+            width: 48px;
+            height: 48px;
+            mix-blend-mode: difference;
+            background-color: white;
+        }
+
+        /* Hide Scrollbar */
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+
+        /* Premium Service Row Specifics */
+        .premium-service-row {
+            background: transparent;
+        }
+        
+        @media (prefers-reduced-motion:no-preference) {
+            .premium-service-row {
+                transition:
+                    background-color .45s ease,
+                    transform .45s ease;
+            }
+        }
+
+        .proof-item {
+    will-change: transform;
+}
+
+.proof-item img {
+    backface-visibility: hidden;
+    transform: translateZ(0);
+}
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <div className="noise-overlay"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useLayoutEffect } = React;
+
+        // --- HOOKS ---
+
+        const useSmoothScroll = () => {
+            useEffect(() => {
+                const lenis = new Lenis({ duration: 1.2, smooth: true, lerp: 0.1 });
+                gsap.registerPlugin(ScrollTrigger);
+                function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
+                requestAnimationFrame(raf);
+            }, []);
+        };
+
+        const useCursor = () => {
+            const cursorRef = useRef(null);
+            useEffect(() => {
+                const cursor = cursorRef.current;
+                if(!cursor) return;
+                
+                const moveCursor = (e) => {
+                    cursor.style.transform = `translate(${e.clientX}px, ${e.clientY}px) translate(-50%, -50%)`;
+                };
+
+                const handleMouseOver = (e) => {
+                    const target = e.target.closest('a, button, .hover-trigger, .premium-service-row');
+                    if (target) {
+                        cursor.classList.add('hovered');
+                    } else {
+                        cursor.classList.remove('hovered');
+                    }
+                };
+
+                window.addEventListener('mousemove', moveCursor);
+                window.addEventListener('mouseover', handleMouseOver);
+                return () => {
+                    window.removeEventListener('mousemove', moveCursor);
+                    window.removeEventListener('mouseover', handleMouseOver);
+                };
+            }, []);
+            return cursorRef;
+        };
+
+        const CustomCursor = () => {
+            const cursorRef = useCursor();
+            return <div ref={cursorRef} id="cursor" />;
+        };
+
+        // --- PREMIUM MAGNETIC BUTTON ---
+        const MagneticButton = ({ children, className, brandGreen = false, onClick }) => {
+            const ref = useRef(null);
+            
+            useLayoutEffect(() => {
+                const element = ref.current;
+                if(!element) return;
+                
+                const xTo = gsap.quickTo(element, "x", { duration: 0.6, ease: "power3.out" });
+                const yTo = gsap.quickTo(element, "y", { duration: 0.6, ease: "power3.out" });
+                
+                const handleMouseMove = (e) => {
+                    const rect = element.getBoundingClientRect();
+                    const x = e.clientX - rect.left - rect.width / 2;
+                    const y = e.clientY - rect.top - rect.height / 2;
+                    xTo(x * 0.35);
+                    yTo(y * 0.35);
+                };
+
+                const handleMouseLeave = () => {
+                    gsap.killTweensOf(element);
+                    gsap.to(element, {
+                        x: 0,
+                        y: 0,
+                        duration: 0.45,
+                        ease: "power3.out",
+                        overwrite: true
+                    });
+                };
+
+                element.addEventListener("mousemove", handleMouseMove);
+                element.addEventListener("mouseleave", handleMouseLeave);
+                
+                return () => {
+                    element.removeEventListener("mousemove", handleMouseMove);
+                    element.removeEventListener("mouseleave", handleMouseLeave);
+                };
+            }, []);
+
+            const baseClass = "relative inline-flex items-center justify-center px-8 py-4 rounded-full border transition-all duration-300 hover-trigger text-sm md:text-base";
+           const greenClass = brandGreen
+    ? "bg-brandGreenDark border-brandGreen text-white hover:bg-brandGreen hover:scale-105 shadow-[0_0_20px_rgba(34,197,94,0.3)]"
+    : "bg-transparent border-brandBlue/70 text-white hover:text-white";
+            return (
+              <button
+    ref={ref}
+    className={`${baseClass} ${greenClass} ${className || ''} group overflow-hidden`}
+    onClick={onClick}
+>
+    <span
+        className="
+            absolute inset-0
+            bg-brandBlue
+            scale-x-0
+            origin-left
+            transition-transform
+            duration-500
+            ease-out
+            group-hover:scale-x-100
+        "
+    />
+
+    <span className="relative z-10 flex items-center gap-3">
+        {children}
+
+        <span className="
+            transition-transform
+            duration-300
+            group-hover:translate-x-1
+        ">
+            →
+        </span>
+    </span>
+</button>
+            );
+        };
+
+        // --- SECTIONS ---
+
+        // FIXED MOBILE NAV COMPONENT (USING BUTTON)
+        const MorphingNavTrigger = ({ isOpen, setIsOpen }) => {
+
+            const btnRef = useRef(null);
+            const line1 = useRef(null);
+            const line2 = useRef(null);
+
+            useLayoutEffect(() => {
+                const l1 = line1.current;
+                const l2 = line2.current;
+                if (!l1 || !l2) return;
+
+                // State Machine Logic for Morphing
+                const duration = 0.35;
+               const ease = "power3.inOut";
+
+                if (isOpen) {
+                    // Morph to X
+                   gsap.to(l1, {
+    y: 5,
+    rotation: 45,
+    width: 24,
+    duration: 0.5,
+    ease
+});
+
+gsap.to(l2, {
+    y: -5,
+    rotation: -45,
+    width: 24,
+    duration: 0.5,
+    ease
+});
+                  
+                } else {
+    gsap.to(l1, {
+        y: 0,
+        rotation: 0,
+        width: 24,
+        duration: 0.5,
+        ease
+    });
+
+    gsap.to(l2, {
+        y: 0,
+        rotation: 0,
+        width: 16,
+        duration: 0.5,
+        ease
+    });
+}
+            }, [isOpen]);
+
+            // Hover Animation
+            // const handleMouseEnter = () => {
+            //     if (!isOpen) {
+            //         gsap.to([l1, l2], { x: 2, duration: 0.3, ease: "power2.out" });
+            //     }
+            // };
+            
+            
+            // const handleMouseLeave = () => {
+            //     if (!isOpen) {
+            //         gsap.to([l1, l2], { x: 0, duration: 0.3, ease: "power2.out" });
+            //     }
+            // };
+            const handleMouseEnter = () => {
+    const l1 = line1.current;
+    const l2 = line2.current;
+
+    if (!l1 || !l2 || isOpen) return;
+
+    gsap.to([l1, l2], {
+        x: 2,
+        duration: 0.3,
+        ease: "power2.out"
+    });
+};
+
+const handleMouseLeave = () => {
+    const l1 = line1.current;
+    const l2 = line2.current;
+
+    if (!l1 || !l2 || isOpen) return;
+
+    gsap.to([l1, l2], {
+        x: 0,
+        duration: 0.3,
+        ease: "power2.out"
+    });
+};
+
+            return (
+                <button 
+                    ref={btnRef}
+                    className="md:hidden relative w-12 h-12 rounded-full border border-white/10 bg-white/[0.04] backdrop-blur-md hover:border-white/20 transition-colors z-50 flex items-center justify-center overflow-hidden hover-trigger"
+                    onClick={() => setIsOpen(!isOpen)}
+                    onMouseEnter={handleMouseEnter}
+                    onMouseLeave={handleMouseLeave}
+                >
+                    <span ref={line1} className="absolute h-[2px] w-6 bg-white/80 left-3 top-[15px]" />
+                    <span ref={line2} className="absolute h-[2px] w-4 bg-white/80 left-3 top-[25px]" />
+                </button>
+            );
+        };
+
+        const Navbar = () => {
+            const [isOpen, setIsOpen] = useState(false);
+            const menuRef = useRef(null);
+
+            useLayoutEffect(() => {
+                const menu = menuRef.current;
+                if (!menu) return;
+                
+                if (isOpen) {
+                    gsap.fromTo(menu, 
+                        { opacity: 0, y: -12, pointerEvents: "none" },
+                        { opacity: 1, y: 0, pointerEvents: "auto", duration: 0.35, ease: "cubic-bezier(.22,1,.36,1)" }
+                    );
+                } else {
+                    gsap.to(menu, { opacity: 0, y: -12, duration: 0.2, ease: "power2.in", pointerEvents: "none" });
+                }
+            }, [isOpen]);
+
+            return (
+                <nav className="fixed top-0 left-0 w-full z-40 px-8 py-6 flex justify-between items-center ">
+                    {/* Explicit pointer-events-auto on Logo */}
+                    <div className="text-2xl font-display font-bold tracking-tighter text-white pointer-events-auto" onClick={() => window.scrollTo(0,0)}>Ecomify Media</div>
+
+                    {/* Desktop Links */}
+                    <div className="hidden md:flex gap-8 font-mono text-xs text-white tracking-widest uppercase">
+                        <a href="#work" className="hover:text-brandBlue transition-colors pointer-events-auto">Work</a>
+                        <a href="#services" className="hover:text-brandBlue transition-colors pointer-events-auto">Services</a>
+                        <a href="#Contact" className="hover:text-brandBlue transition-colors pointer-events-auto">Contact</a>
+                    </div>
+
+                    {/* Mobile Trigger - Now a BUTTON */}
+                    <MorphingNavTrigger isOpen={isOpen} setIsOpen={setIsOpen} />
+
+                    {/* Mobile Menu Panel */}
+                    <div 
+                        ref={menuRef}
+                        className="absolute top-full right-8 mt-4 w-64 bg-surface/95 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl md:hidden pointer-events-none opacity-0"
+                    >
+                        <div className="flex flex-col space-y-6 font-display font-semibold text-white text-lg">
+                            <a 
+                                href="#work" 
+                                onClick={() => setIsOpen(false)}
+                                className="hover:text-brandBlue transition-colors flex items-center justify-between"
+                            >
+                                Work <span className="text-xs font-mono font-normal opacity-40">01</span>
+                            </a>
+                            <a 
+                                href="#services" 
+                                onClick={() => setIsOpen(false)}
+                                className="hover:text-brandBlue transition-colors flex items-center justify-between"
+                            >
+                                Services <span className="text-xs font-mono font-normal opacity-40">02</span>
+                            </a>
+                            <a 
+                           //bring to the section just before footer
+                                href="#Contact" 
+                                onClick={() => setIsOpen(false)}
+                                className="hover:text-brandBlue transition-colors flex items-center justify-between"
+                            >
+                                Get in Touch <span className="text-xs font-mono font-normal opacity-40">03</span>
+                            </a>
+                        </div>
+                    </div>
+                </nav>
+            );
+        };
+
+        const FloatingWhatsApp = () => (
+            <div className="fixed bottom-8 right-8 z-50">
+                <a 
+                    href="https://wa.me/message/2W4JEIXCHLOKF1" 
+                    target="_blank"
+                    className="brand-green hover-trigger flex items-center justify-center w-14 h-14 rounded-full bg-brandGreen text-white shadow-[0_0_20px_rgba(34,197,94,0.4)] hover:bg-brandGreenDark transition-all duration-300 hover:scale-110"
+                >
+                 <svg
+  className="w-6 h-6"
+  fill="currentColor"
+  viewBox="0 0 24 24"
+>
+  <path d="M20.52 3.48A11.82 11.82 0 0 0 12.02 0C5.39 0 .02 5.37.02 12c0 2.11.55 4.18 1.59 6.01L0 24l6.18-1.62A11.95 11.95 0 0 0 12.02 24C18.65 24 24 18.63 24 12c0-3.19-1.24-6.19-3.48-8.52ZM12.02 21.82a9.77 9.77 0 0 1-4.98-1.37l-.36-.21-3.67.96.98-3.58-.24-.37A9.82 9.82 0 1 1 12.02 21.82Zm5.39-7.33c-.29-.15-1.72-.85-1.99-.95-.27-.1-.47-.15-.67.15-.2.29-.77.95-.94 1.14-.17.2-.35.22-.64.08-.29-.15-1.24-.46-2.36-1.47-.87-.77-1.46-1.72-1.63-2.01-.17-.29-.02-.45.13-.59.13-.13.29-.35.44-.52.15-.17.2-.29.3-.49.1-.2.05-.37-.02-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.08-.79.37-.27.29-1.04 1.01-1.04 2.47 0 1.46 1.06 2.87 1.21 3.07.15.2 2.08 3.17 5.04 4.45.7.3 1.25.48 1.68.62.71.22 1.36.19 1.87.11.57-.08 1.72-.7 1.97-1.38.24-.68.24-1.27.17-1.39-.08-.12-.27-.2-.56-.35Z" />
+</svg>   </a>
+            </div>
+        );
+
+        const Hero = () => {
+            const textRef = useRef(null);
+            const subRef = useRef(null);
+            const ctaRef = useRef(null);
+
+            useLayoutEffect(() => {
+                const ctx = gsap.context(() => {
+                    const tl = gsap.timeline();
+
+                    tl.to(textRef.current, { opacity: 1, scale: 1, duration: 0.2, ease: "power2.out" })
+                    
+                    .to(textRef.current, { 
+                          opacity: 0, 
+                          y: -10, 
+                          scale: 1.1,
+                          duration: 0.15, 
+                          ease: "power2.inOut",
+                          onComplete: () => { textRef.current.innerText = "LAUNCH."; }
+                      })
+                      .set(textRef.current, { y: 10, scale: 0.9 })
+                      .to(textRef.current, { opacity: 1, y: 0, scale: 1, duration: 0.2, ease: "power2.out" })
+
+                    .to(textRef.current, { 
+                          opacity: 0, 
+                          y: -10, 
+                          scale: 1.1,
+                          duration: 0.15, 
+                          ease: "power2.inOut",
+                          onComplete: () => { textRef.current.innerText = "SCALE."; }
+                      })
+                      .set(textRef.current, { y: 10, scale: 0.9 })
+                      .to(textRef.current, { opacity: 1, y: 0, scale: 1, duration: 0.2, ease: "power2.out" })
+
+                      .to(textRef.current, { 
+                          opacity: 0, 
+                          scale: 0.8, 
+                          filter: "blur(10px)",
+                          duration: 0.3, 
+                          ease: "power2.inOut",
+                          onComplete: () => { 
+                              textRef.current.innerText = "Build an eCommerce Business That Sells.";
+                              textRef.current.className = "font-display font-bold text-4xl md:text-6xl text-center text-white leading-tight max-w-5xl mx-auto tracking-tight";
+                          }
+                      })
+                      .set(textRef.current, { y: 20, opacity: 0, scale: 1.1, filter: "blur(0px)" })
+                      
+                      .to(textRef.current, { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: "back.out(1.7)" })
+                      
+                      .fromTo(subRef.current, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5 }, "<0.1")
+                      .fromTo(ctaRef.current, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5 }, "<0.1");
+
+                }, textRef);
+                return () => ctx.revert();
+            }, []);
+
+            return (
+                <section className="relative w-full h-screen flex flex flex-col justify-center items-center overflow-hidden bg-bgMain">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] bg-brandBlue/10 rounded-full blur-[120px] pointer-events-none"></div>
+                    
+                    {/* Initial state: text-[15vw] */}
+                    <h1 ref={textRef} className="font-display font-bold text-[15vw] leading-[0.85] text-white tracking-tighter opacity-0">
+                        BUILD.
+                    </h1>
+                    
+                    <p ref={subRef} className="mt-8 font-sans text-xl text-textSec font-light max-w-xl text-center">
+                        eCommerce growth without the trial and error.
+                    </p>
+
+                    <div ref={ctaRef} className="mt-12 opacity-0">
+                        <a
+    href="https://wa.me/message/2W4JEIXCHLOKF1"
+    target="_blank"
+    rel="noopener noreferrer">
+                        <MagneticButton>Start The Conversation</MagneticButton>
+                        </a>
+                    </div>
+
+                    <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex flex-col items-center gap-2 opacity-50">
+                        <span className="text-[10px] font-mono tracking-widest uppercase">Scroll</span>
+                        <div className="w-[1px] h-12 bg-gradient-to-b from white to-transparent"></div>
+                    </div>
+                </section>
+            );
+        };
+        const PremiumServices = () => {
+            const sectionRef = useRef(null);
+            const [active, setActive] = useState(null);
+
+            const services = [
+                {
+                    number: "01",
+                    title: "Shopify Store Development",
+                    desc: "Conversion-focused Shopify experiences built for speed, trust, and growth."
+                },
+                {
+                    number: "02",
+                    title: "Product Hunting & Research",
+                    desc: "Market-backed product discovery using demand signals and competitor analysis."
+                },
+                {
+                    number: "03",
+                    title: "Product Listing & Optimization",
+                    desc: "Listings engineered to improve click-through rate and purchase intent."
+                },
+                {
+                    number: "04",
+                    title: "Supplier & Sourcing Support",
+                    desc: "Reliable sourcing workflows, supplier communication, and fulfillment support."
+                },
+                {
+                    number: "05",
+                    title: "Meta & TikTok Ad Accounts",
+                    desc: "Infrastructure setup for scalable advertising and campaign deployment."
+                },
+                {
+                    number: "06",
+                    title: "Marketing & Ads Management",
+                    desc: "Creative strategy, media buying, testing frameworks, and performance tracking."
+                },
+                {
+                    number: "07",
+                    title: "E-commerce Growth & Mentorship",
+                    desc: "Hands-on guidance for founders looking to build long-term growth systems."
+                }
+            ];
+
+            useLayoutEffect(() => {
+                const rows = gsap.utils.toArray(".premium-service-row");
+
+                gsap.fromTo(
+                    rows,
+                    {
+                        opacity: 0,
+                        y: 40
+                    },
+                    {
+                        opacity: 1,
+                        y: 0,
+                        stagger: 0.12,
+                        duration: 1,
+                        ease: "power3.out",
+                        scrollTrigger: {
+                            trigger: sectionRef.current,
+                            start: "top 75%"
+                        }
+                    }
+                );
+            }, []);
+
+            const moveGlow = (e) => {
+                const row = e.currentTarget;
+                const glow = row.querySelector(".row-glow");
+                
+                const rect = row.getBoundingClientRect();
+                glow.style.left = `${e.clientX - rect.left}px`;
+                glow.style.top = `${e.clientY - rect.top}px`;
+            };
+
+            return (
+                <section
+                    ref={sectionRef}
+                    id="services"
+                    className="relative py-32 md:py-40 border-t border-white/5 bg-[#0D1117]"
+                >
+                    <div className="max-w-7xl mx-auto px-6">
+                        <div className="mb-20">
+                            <span className="font-mono text-xs tracking-[0.3em] text-brandBlue uppercase block mb-6">
+                                What We Help With
+                            </span>
+                            <h2 className="text-5xl md:text-8xl font-display font-bold text-white leading-[0.95] tracking-tight max-w-5xl">
+                                WE BUILD THE SYSTEMS
+                                <br />
+                                BEHIND ECOMMERCE GROWTH
+                            </h2>
+                        </div>
+
+                        <div className="border-t border-white/10">
+                            {services.map((service, index) => {
+                                const isOpen = active === index;
+
+                                return (
+                                    <div
+                                        key={index}
+                                        onMouseMove={moveGlow}
+                                        onMouseEnter={() => setActive(index)}
+                                        onMouseLeave={() => setActive(null)}
+                                        onClick={() => setActive(isOpen ? null : index)}
+                                        className="premium-service-row group relative overflow-hidden border-b border-white/10 cursor-pointer"
+                                    >
+                                        <div className="row-glow absolute w-64 h-64 rounded-full bg-brandBlue/10 blur-[80px] pointer-events-none -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                                        <div className={`
+                                            relative z-10
+                                            flex flex-col md:flex-row
+                                            justify-between
+                                            md:items-center
+                                            px-0
+                                            py-8 md:py-0
+                                            md:h-[120px]
+                                            transition-all duration-500
+                                            ${isOpen ? "bg-white/[0.03]" : ""}
+                                        `}>
+                                            
+                                            <div className="flex items-center gap-8">
+                                                <span className="text-2xl md:text-3xl font-display text-white/30 select-none">
+                                                    {service.number}
+                                                </span>
+                                                <h3 className={`
+                                                    text-2xl md:text-5xl
+                                                    font-display font-semibold
+                                                    text-white
+                                                    tracking-tight
+                                                    transition-all duration-500
+                                                    ${isOpen ? "translate-x-2" : ""}
+                                                `}>
+                                                    {service.title}
+                                                </h3>
+                                            </div>
+
+                                            <div className="flex items-center gap-6 mt-4 md:mt-0 overflow-hidden">
+                                                <p className={`
+                                                    max-w-md text-textSec text-sm md:text-base
+                                                    transition-all duration-500
+                                                    ${isOpen ? "opacity-100 max-h-20" : "opacity-0 max-h-0 md:max-h-20 md:group-hover:opacity-100"}
+                                                `}>
+                                                    {service.desc}
+                                                </p>
+                                               
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        // const ProofWall = () => {
+        //     const containerRef = useRef(null);
+        //     const proofs = [
+        //         { type: 'chat', height: 'h-64', title: 'Client Success' },
+        //         { type: 'graph', height: 'h-80', title: 'Revenue Spike' },
+        //         { type: 'review', height: 'h-56', title: '5 Star Review' },
+        //         { type: 'dash', height: 'h-72', title: 'Dashboard' },
+        //         { type: 'chat', height: 'h-60', title: 'Strategy Call' },
+        //         { type: 'graph', height: 'h-64', title: 'ROAS 4.5x' },
+        //     ];
+
+        //     useLayoutEffect(() => {
+        //         const el = containerRef.current;
+        //         if(!el) return;
+        //         const items = el.querySelectorAll('.proof-item');
+        //         gsap.fromTo(items, 
+        //             { y: 100, opacity: 0 },
+        //             { 
+        //                 y: 0, 
+        //                 opacity: 1, 
+        //                 stagger: 0.2, 
+        //                 duration: 1.2, 
+        //                 ease: "power3.out",
+        //                 scrollTrigger: {
+        //                     trigger: el,
+        //                     start: "top 85%", 
+        //                     end: "bottom center",
+        //                     toggleActions: "play none none reverse"
+        //                 }
+        //             }
+        //         );
+        //     }, []);
+
+        //     return (
+        //         <section ref={containerRef} className="relative w-full py-32 bg-bgMain border-t border-white/5">
+        //             <div className="max-w-7xl mx-auto px-6 mb-16 flex justify-between items-end">
+        //                 <h2 className="text-4xl font-display font-bold text-white">Proof Wall.</h2>
+        //                 <p className="font-mono text-brandBlue hidden md:block">NO FILTER. JUST RESULTS.</p>
+        //             </div>
+
+        //             <div className="max-w-7xl mx-auto px-6 columns-1 md:columns-3 gap-8 space-y-8">
+        //                 {proofs.map((p, i) => (
+        //                     <div key={i} className={`break-inside-avoid bg-elevated rounded-lg border border-white/5 overflow-hidden shadow-lg ${p.height}`}>
+        //                         <div className="w-full h-full p-4 flex flex-col">
+        //                             <div className="flex gap-2 mb-4 opacity-50">
+        //                                 <div className="w-3 h-3 rounded-full bg-red-500"></div>
+        //                                 <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+        //                                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
+        //                             </div>
+        //                             <div className="flex-1 bg-surface/50 rounded relative">
+        //                                 {p.type === 'chat' && (
+        //                                     <div className="absolute bottom-4 left-4 right-4 space-y-2">
+        //                                         <div className="bg-white/10 p-2 rounded-tr-lg rounded-br-lg rounded-bl-lg w-3/4 text-xs text-white/70">Are we seeing sales today?</div>
+        //                                         <div className="bg-brandBlue p-2 rounded-tl-lg rounded-tr-lg rounded-bl-lg w-3/4 ml-auto text-xs text-white text-right">Yes, 12 orders already!</div>
+        //                                     </div>
+        //                                 )}
+        //                                 {p.type === 'graph' && (
+        //                                     <div className="absolute inset-0 flex items-end justify-between px-4 pb-4">
+        //                                         {[40, 60, 30, 80, 50, 90].map((h, idx) => (
+        //                                             <div key={idx} className="w-4 bg-brandBlue/80 rounded-t" style={{ height: `${h}%` }}></div>
+        //                                         ))}
+        //                                     </div>
+        //                                 )}
+        //                                 {(p.type === 'review' || p.type === 'dash') && (
+        //                                     <div className="absolute inset-4 border border-dashed border-white/10 rounded flex items-center justify-center">
+        //                                         <span className="font-mono text-xs text-textMuted">[DATA VISUALIZATION]</span>
+        //                                     </div>
+        //                                 )}
+        //                             </div>
+        //                             <div className="mt-4 font-mono text-xs text-brandGreenGlow uppercase tracking-widest">{p.title}</div>
+        //                         </div>
+        //                     </div>
+        //                 ))}
+        //             </div>
+        //         </section>
+        //     );
+        // };
+// const ProofWall = () => {
+//     const containerRef = useRef(null);
+
+//     const reviews = [
+//         "public/reviews/review1.jpeg",
+//         "public/reviews/review2.jpeg",
+//         "public/reviews/review3.jpeg",
+//         "public/reviews/review4.jpeg",
+//         "public/reviews/review6.jpeg",
+//         "public/reviews/review7.jpeg",
+//         "public/reviews/review8.jpeg",
+//     ];
+
+//     useLayoutEffect(() => {
+//         const el = containerRef.current;
+//         if (!el) return;
+
+//         const items = el.querySelectorAll('.proof-item');
+
+//         gsap.fromTo(
+//             items,
+//             {
+//                 y: 80,
+//                 opacity: 0
+//             },
+//             {
+//                 y: 0,
+//                 opacity: 1,
+//                 stagger: 0.12,
+//                 duration: 1,
+//                 ease: "power3.out",
+//                 scrollTrigger: {
+//                     trigger: el,
+//                     start: "top 85%",
+//                     toggleActions: "play none none reverse"
+//                 }
+//             }
+//         );
+//     }, []);
+
+//     return (
+//         <section
+//             ref={containerRef}
+//             className="relative w-full py-32 bg-bgMain border-t border-white/5"
+//         >
+//             <div className="max-w-7xl mx-auto px-6 mb-16 flex justify-between items-end">
+//                 <div>
+//                     <p className="font-mono text-xs tracking-[0.3em] text-brandBlue uppercase mb-4">
+//                         Social Proof
+//                     </p>
+
+//                     <h2 className="text-4xl md:text-6xl font-display font-bold text-white">
+//                         Real Client Results.
+//                     </h2>
+//                 </div>
+
+//                 <p className="font-mono text-brandBlue hidden md:block">
+//                     REAL CONVERSATIONS. REAL RESULTS.
+//                 </p>
+//             </div>
+
+//             <div className="max-w-7xl mx-auto px-6 columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
+//                 {reviews.map((src, i) => (
+//                     <div
+//                         key={i}
+//                         className="proof-item break-inside-avoid mb-6"
+//                     >
+//                         <div className="overflow-hidden rounded-3xl border border-white/10 bg-elevated shadow-2xl">
+//                             <img
+//                                 src={src}
+//                                 alt={`Client review ${i + 1}`}
+//                                 className="w-full h-auto block"
+//                                 loading="lazy"
+//                             />
+//                         </div>
+//                     </div>
+//                 ))}
+//             </div>
+//         </section>
+//     );
+// };
+        const ProofWall = () => {
+    const containerRef = useRef(null);
+
+    const reviews = [
+        "public/reviews/review1.jpeg",
+        "public/reviews/review2.jpeg",
+        "public/reviews/review3.jpeg",
+        "public/reviews/review4.jpeg",
+        "public/reviews/review6.jpeg",
+        "public/reviews/review7.jpeg",
+        "public/reviews/review8.jpeg",
+    ];
+
+    useLayoutEffect(() => {
+        const el = containerRef.current;
+        if (!el) return;
+
+        const items = el.querySelectorAll(".proof-item");
+
+        // Reveal animation
+        gsap.fromTo(
+            items,
+            {
+                clipPath: "inset(0 0 100% 0)",
+                y: 40,
+            },
+            {
+                clipPath: "inset(0 0 0% 0)",
+                y: 0,
+                stagger: 0.12,
+                duration: 1.2,
+                ease: "power3.out",
+                scrollTrigger: {
+                    trigger: el,
+                    start: "top 85%",
+                    toggleActions: "play none none reverse",
+                },
+            }
+        );
+
+        // Parallax drift
+        items.forEach((item, i) => {
+            const offset = i % 2 === 0 ? 25 : -25;
+
+            gsap.to(item, {
+                y: offset,
+                ease: "none",
+                scrollTrigger: {
+                    trigger: item,
+                    start: "top bottom",
+                    end: "bottom top",
+                    scrub: 1,
+                },
+            });
+        });
+
+        return () => {
+            ScrollTrigger.getAll().forEach((st) => st.kill());
+        };
+    }, []);
+
+    const handleMouseMove = (e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
+        e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
+    };
+
+    return (
+        <section
+            ref={containerRef}
+            className="relative w-full py-32 bg-bgMain border-t border-white/5"
+        >
+            <div className="max-w-7xl mx-auto px-6 mb-16 flex justify-between items-end">
+                <div>
+                    <p className="font-mono text-xs tracking-[0.3em] text-brandBlue uppercase mb-4">
+                        Social Proof
+                    </p>
+
+                    <h2 className="text-4xl md:text-6xl font-display font-bold text-white">
+                        Real Client Results.
+                    </h2>
+                </div>
+
+                <p className="font-mono text-brandBlue hidden md:block">
+                    REAL CONVERSATIONS. REAL RESULTS.
+                </p>
+            </div>
+
+            <div className="max-w-7xl mx-auto px-6 columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
+                {reviews.map((src, i) => (
+                    <div
+                        key={i}
+                        className="proof-item break-inside-avoid mb-6 will-change-transform"
+                    >
+                        <div
+                            className="group relative overflow-hidden rounded-3xl border border-white/10 bg-elevated shadow-2xl"
+                            onMouseMove={handleMouseMove}
+                        >
+                            {/* Spotlight */}
+                            <div
+                                className="
+                                    pointer-events-none
+                                    absolute
+                                    inset-0
+                                    opacity-0
+                                    transition-opacity
+                                    duration-500
+                                    group-hover:opacity-100
+                                "
+                                style={{
+                                    background:
+                                        "radial-gradient(300px circle at var(--mouse-x) var(--mouse-y), rgba(255,255,255,0.08), transparent 60%)",
+                                }}
+                            />
+
+                            <img
+                                src={src}
+                                alt={`Client review ${i + 1}`}
+                                loading="lazy"
+                                className="block w-full h-auto select-none"
+                            />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </section>
+    );
+};
+
+const AnimatedCounter = ({ value, suffix = "", duration = 2.5, prefix = "" }) => {
+            const elementRef = useRef(null);
+            const counterRef = useRef({ val: 0 });
+            const ctxRef = useRef(gsap.context(() => {}, elementRef.current));
+
+            useLayoutEffect(() => {
+                const el = elementRef.current;
+                if(!el) return;
+                
+                ctxRef.current = gsap.context(() => {
+                    ScrollTrigger.create({
+                        trigger: el,
+                        start: "top 85%", 
+                        onEnter: () => {
+                            gsap.killTweensOf(counterRef.current); 
+                            gsap.to(counterRef.current, {
+                                val: value,
+                                duration: duration,
+                                ease: "power2.out",
+                                snap: { val: Number.isInteger(value) ? 1 : 0.1 }, 
+                                onUpdate: () => {
+                                    const displayVal = Number.isInteger(value) ? Math.round(counterRef.current.val) : counterRef.current.val.toFixed(1);
+                                    el.innerText = prefix + displayVal + suffix;
+                                }
+                            });
+                        },
+                        onLeaveBack: () => {
+                            gsap.killTweensOf(counterRef.current);
+                            gsap.to(counterRef.current, {
+                                val: 0,
+                                duration: 1,
+                                onUpdate: () => {
+                                    el.innerText = prefix + Math.round(counterRef.current.val) + suffix;
+                                }
+                            });
+                        }
+                    });
+                }, el);
+                
+                return () => ctxRef.current.revert();
+            }, [value, suffix, duration, prefix]);
+
+            return <span ref={elementRef}>{prefix}0{suffix}</span>;
+        };
+
+        const Results = () => {
+            const stats = [
+                { val: 40, suffix: "+", label: "Projects Delivered" },
+                { val: 1.8, suffix: "M+", label: "Total Revenue Generated", prefix: "$" }, 
+                { val: 100, suffix: "%", label: "Focus On Growth" }
+            ];
+
+            return (
+                <section className="w-full bg-[#0D1117] py-24 md:py-32 border-t border-white/5">
+                    <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12 h-full">
+                        {stats.map((stat, i) => (
+                            <div key={i} className="flex flex-col items-center justify-center text-center border border-white/5 bg-surface/30 rounded-2xl p-8 min-h-[300px]">
+                                <h2 className="text-6xl md:text-8xl font-display font-bold text-white leading-none tracking-tighter mb-4">
+                                    <AnimatedCounter value={stat.val} suffix={stat.suffix} prefix={stat.prefix} />
+                                </h2>
+                                <p className="mt-4 font-mono text-brandBlue tracking-widest uppercase text-xs md:text-sm whitespace-nowrap">{stat.label}</p>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            );
+        };
+
+        const SectionDivider = () => (
+            <div className="w-full py-8 bg-brandBlue overflow-hidden flex items-center border-y border-white/10">
+                <div className="animate-marquee flex whitespace-nowrap">
+                    {[...Array(10)].map((_, i) => (
+                        <span key={i} className="text-4xl font-display font-bold text-white mx-8 tracking-wider">8 FIGURES IN SALES • PROVEN RESULTS • GLOBAL IMPACT • TRUSTED BY 1K+ CLIENTS •  </span>
+                    ))}
+                </div>
+            </div>
+        );
+
+        // --- REVERTED & WORKING CASE STUDIES SECTION ---
+        
+        const CaseStudyVisual = ({ type, index }) => {
+            return (
+                <div className="relative w-full h-full min-h-[400px] group-hover:translate-y-[-8px] transition-transform duration-700 ease-out z-20">
+                    
+                    <div className="absolute inset-0 bg-brandBlue/5 rounded-3xl blur-3xl opacity-50 pointer-events-none"></div>
+
+                    {type === 'bar' && (
+                        <>
+                            <div className="absolute top-0 right-0 w-3/4 h-2/3 bg-surface/80 backdrop-blur-md border border-white/10 rounded-2xl p-6 shadow-2xl z-20">
+                                <div className="flex justify-between items-center mb-8">
+                                    <div className="h-2 w-20 bg-white/20 rounded-full"></div>
+                                    <div className="flex gap-2">
+                                        <div className="h-8 w-8 rounded bg-brandBlue/20"></div>
+                                        <div className="h-8 w-8 rounded bg-white/10"></div>
+                                    </div>
+                                </div>
+                                <div className="flex items-end justify-between h-32 gap-4">
+                                    {[40, 55, 35, 70, 50, 90, 75].map((h, i) => (
+                                        <div key={i} className="w-full bg-gradient-to-t from-brandBlue/20 to-brandBlue rounded-t-sm relative">
+                                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-mono text-white/50 opacity-0 group-hover:opacity-100 transition-opacity">{h}%</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="absolute bottom-0 left-0 w-1/2 h-1/3 bg-brandBlue/10 backdrop-blur-md border border-white/5 rounded-xl p-5 flex flex-col justify-center z-20">
+                                <div className="text-xs font-mono text-textSec mb-1">Total ROAS</div>
+                                <div className="text-4xl font-display font-bold text-white">3.8x</div>
+                            </div>
+                        </>
+                    )}
+
+                    {type === 'rate' && (
+                        <>
+                            <div className="absolute top-10 left-10 w-2/3 h-1/2 bg-surface/80 backdrop-blur-md border border-white/10 rounded-2xl p-6 shadow-2xl z-20">
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="w-12 h-12 rounded-full border-4 border-brandBlue border-t-transparent"></div>
+                                    <div>
+                                        <div className="text-xs font-mono text-textSec">Conversion Rate</div>
+                                        <div className="text-2xl font-display font-bold text-white">+146%</div>
+                                    </div>
+                                </div>
+                                <div className="space-y-3">
+                                    {[1,2,3].map(i => (
+                                        <div key={i} className="h-2 bg-white/5 rounded-full overflow-hidden">
+                                            <div className="h-full bg-brandGreen/60 w-[70%]"></div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="absolute bottom-10 right-0 w-1/3 h-1/3 bg-white/5 backdrop-blur-md border border-white/5 rounded-xl p-4 z-20">
+                                <div className="text-3xl font-bold text-white mb-1">24s</div>
+                                <div className="text-[10px] text-textSec uppercase tracking-wide">Avg. Session</div>
+                            </div>
+                        </>
+                    )}
+
+                    {type === 'line' && (
+                        <>
+                            <div className="absolute top-0 right-0 w-full h-3/4 bg-surface/80 backdrop-blur-md border border-white/10 rounded-2xl p-6 shadow-2xl flex flex-col z-20">
+                                <div className="flex justify-between mb-4">
+                                    <div className="text-xs font-mono text-textSec">REVENUE GROWTH</div>
+                                    <div className="text-xs font-mono text-brandGreen">+312% YOY</div>
+                                </div>
+                                <div className="relative flex-1 w-full">
+                                    <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+                                        <defs>
+                                            <linearGradient id={`grad${index}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                                                <stop offset="0%" stopColor="#22C55E" stopOpacity="0.2" />
+                                                <stop offset="100%" stopColor="#22C55E" stopOpacity="0" />
+                                            </linearGradient>
+                                        </defs>
+                                        <path d="M0 250 Q 100 230, 200 150 T 400 50 V 300 H 0 Z" fill={`url(#grad${index})`} />
+                                        <path d="M0 250 Q 100 230, 200 150 T 400 50" fill="none" stroke="#22C55E" strokeWidth="3" vectorEffect="non-scaling-stroke" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div className="absolute bottom-0 left-10 w-1/3 h-1/4 bg-brandGreen/10 backdrop-blur-md border border-brandGreen/20 rounded-xl flex items-center justify-center gap-3 z-20">
+                                <div className="text-2xl font-bold text-white">$84k</div>
+                                <div className="text-xs font-mono text-brandGreen">MO</div>
+                            </div>
+                        </>
+                    )}
+
+                </div>
+            );
+        };
+
+        const CaseStudy = ({ index, title, problem, solution, metrics, tags, visualType }) => {
+            const containerRef = useRef(null);
+            const visualRef = useRef(null);
+
+            useLayoutEffect(() => {
+                const container = containerRef.current;
+                const visual = visualRef.current;
+                if (!container) return;
+
+                gsap.fromTo(container, 
+                    { opacity: 0, y: 80, scale: 0.96 },
+                    { 
+                        opacity: 1, 
+                        y: 0, 
+                        scale: 1, 
+                        duration: 1.2, 
+                        ease: "power4.out",
+                        scrollTrigger: {
+                            trigger: container,
+                            start: "top 75%", 
+                            toggleActions: "play none none reverse"
+                        }
+                    }
+                );
+
+                if (visual) {
+                    gsap.to(visual, {
+                        y: -30, 
+                        ease: "none",
+                        scrollTrigger: {
+                            trigger: container,
+                            start: "top bottom",
+                            end: "bottom top",
+                            scrub: 1
+                        }
+                    });
+                }
+            }, []);
+
+            return (
+                <div ref={containerRef} className="min-h-[90vh] w-full border-b border-white/5 flex items-center relative overflow-visible px-6 md:px-0">
+                    
+                    {/* Background Number */}
+                    <span className="absolute -top-20 -right-10 md:-top-40 md:-right-20 text-[80px] md:text-[120px] lg:text-[180px] font-display font-bold text-white/5 leading-none select-none z-0 pointer-events-none">
+                        0{index}
+                    </span>
+
+                    <div className="max-w-7xl mx-auto px-6 md:px-6 w-full grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24 items-center z-10">
+                        
+                        <div className="order-2 md:order-1">
+                            <div className="flex flex-wrap gap-3 mb-8">
+                                {tags.map((tag, i) => (
+                                    <span key={i} className="px-3 py-1 border border-white/10 rounded-full text-[10px] md:text-xs font-mono text-textSec uppercase tracking-wider bg-surface/50">
+                                        {tag}
+                                    </span>
+                                ))}
+                            </div>
+
+                            <h2 className="text-4xl md:text-6xl font-display font-bold text-white mb-8 tracking-tight">
+                                {title}
+                            </h2>
+
+                            <div className="space-y-8 mb-10">
+                                <div>
+                                    <h4 className="text-xs font-mono text-red-400 uppercase tracking-widest mb-2">The Problem</h4>
+                                    <p className="text-lg text-textSec font-light leading-relaxed">{problem}</p>
+                                </div>
+                                <div>
+                                    <h4 className="text-xs font-mono text-brandGreen uppercase tracking-widest mb-2">The Solution</h4>
+                                    <p className="text-lg text-textSec font-light leading-relaxed">{solution}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-8 border-t border-white/10 pt-6">
+                                {metrics.map((m, i) => (
+                                    <div key={i}>
+                                        {(() => {
+                                            const str = m.value;
+                                            let val, prefix = "", suffix = "";
+                                            
+                                            if (str.startsWith('$')) {
+                                                prefix = "$";
+                                                const numPart = str.slice(1);
+                                                if (numPart.endsWith('k')) {
+                                                    val = parseFloat(numPart);
+                                                    suffix = "k";
+                                                } else {
+                                                    val = parseFloat(numPart);
+                                                }
+                                            } else if (str.endsWith('%')) {
+                                                suffix = "%";
+                                                val = parseFloat(str.replace('%', ''));
+                                                if (str.startsWith('+')) prefix = "+";
+                                            } else if (str.endsWith('x')) {
+                                                suffix = "x";
+                                                val = parseFloat(str.replace('x', ''));
+                                            } else {
+                                                val = parseFloat(str);
+                                            }
+
+                                            return (
+                                                <div className="text-2xl md:text-3xl font-display font-bold text-white">
+                                                    <AnimatedCounter 
+                                                        value={val} 
+                                                        suffix={suffix} 
+                                                        prefix={prefix} 
+                                                        duration={1.5} 
+                                                    />
+                                                </div>
+                                            );
+                                        })()}
+                                        <div className="text-[10px] font-mono text-textSec uppercase mt-1">{m.label}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="order-1 md:order-2 relative min-h-[400px] md:min-h-[500px] w-full group">
+                            <div ref={visualRef} className="w-full h-full">
+                                <CaseStudyVisual type={visualType} index={index} />
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            );
+        };
+
+        const CaseStudies = () => {
+            const studies = [
+                {
+                    index: 1,
+                    title: "Urban Women's Wear",
+                    problem: "No consistent acquisition system. Traffic was erratic and ad spend was inefficient.",
+                    solution: "Store optimization + Meta ads scaling. We rebuilt the funnel and implemented a structured testing framework.",
+                    metrics: [
+                        { value: "3.8x", label: "ROAS" },
+                        { value: "+217%", label: "Revenue" }
+                    ],
+                    tags: ["Fashion", "Meta Ads", "Shopify", "6 Months"],
+                    visualType: "bar"
+                },
+                {
+                    index: 2,
+                    title: "Home Done Store",
+                    problem: "High traffic volume with zero sales. The landing page wasn't communicating value.",
+                    solution: "Landing page redesign and offer strategy. Focused on trust signals and clearer CTAs.",
+                    metrics: [
+                        { value: "+146%", label: "Conversion" },
+                        { value: "-40%", label: "CPA" }
+                    ],
+                    tags: ["Home Decor", "CRO", "Design", "3 Months"],
+                    visualType: "rate"
+                },
+                {
+                    index:3,
+                    title: "Royal Souk",
+                    problem: "No scalable growth process. Revenue plateaued after initial launch phase.",
+                    solution: "Creative testing system and paid acquisition. Rotated creatives weekly to combat fatigue.",
+                    metrics: [
+                        { value: "+312%", label: "Revenue" },
+                        { value: "$84k", label: "Mo. Rev" }
+                    ],
+                    tags: ["General Store", "TikTok", "Strategy", "8 Months"],
+                    visualType: "line"
+                }
+            ];
+
+            return (
+                <section id="work" className="w-full bg-bgMain border-t border-white/5 py-32">
+                    <div className="max-w-7xl mx-auto px-6 mb-32 text-center">
+                        <span className="font-mono text-xs tracking-[0.3em] text-brandBlue uppercase block mb-6">
+                            Selected Work
+                        </span>
+                        <h2 className="text-5xl md:text-7xl font-display font-bold text-white tracking-tight">
+                            Brands We Helped Grow
+                        </h2>
+                    </div>
+
+                    <div className="flex flex-col">
+                        {studies.map((study) => (
+                            <CaseStudy key={study.index} {...study} />
+                        ))}
+                    </div>
+                </section>
+            );
+        };
+
+        const FinalCTA = () => {
+            const textRef = useRef(null);
+
+            useLayoutEffect(() => {
+                gsap.fromTo(textRef.current,
+                    { opacity: 0, scale: 0.95 },
+                    { opacity: 1, scale: 1, duration: 2, ease: "power2.out" }
+                );
+            }, []);
+
+            return (
+                //this section is the contact section, change the id to "contact" and add it to the nav links
+                <section id="Contact"  className="contact w-full min-h-screen bg-[#0D1117] flex flex flex-col items-center justify-center relative overflow-hidden p-6">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[50vw] h-[50vw] bg-brandGreen/10 rounded-full blur-[100px] pointer-events-none"></div>
+                    
+                    <h1 ref={textRef} className="text-5xl md:text-8xl lg:text-9xl font-display font-bold text-white text-center mb-16 leading-tight tracking-tighter">
+                        Ready To Build<br/>Something That Sells?
+                    </h1>
+
+                    <div className="relative z-10">
+                          <a
+    href="https://wa.me/message/2W4JEIXCHLOKF1"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+                        <MagneticButton brandGreen className="px-12 py-6 text-2xl gap-4 rounded-full border border-brandGreen text-brandGreen hover:bg-brandGreen hover:text-white hover:shadow-[0_0_40px_rgba(34,197,94,0.5)] transition-transform duration-500 hover:scale-105">
+                            Chat On WhatsApp
+                           <svg
+  className="w-6 h-6"
+  fill="currentColor"
+  viewBox="0 0 24 24"
+>
+  <path d="M20.52 3.48A11.82 11.82 0 0 0 12.02 0C5.39 0 .02 5.37.02 12c0 2.11.55 4.18 1.59 6.01L0 24l6.18-1.62A11.95 11.95 0 0 0 12.02 24C18.65 24 24 18.63 24 12c0-3.19-1.24-6.19-3.48-8.52ZM12.02 21.82a9.77 9.77 0 0 1-4.98-1.37l-.36-.21-3.67.96.98-3.58-.24-.37A9.82 9.82 0 1 1 12.02 21.82Zm5.39-7.33c-.29-.15-1.72-.85-1.99-.95-.27-.1-.47-.15-.67.15-.2.29-.77.95-.94 1.14-.17.2-.35.22-.64.08-.29-.15-1.24-.46-2.36-1.47-.87-.77-1.46-1.72-1.63-2.01-.17-.29-.02-.45.13-.59.13-.13.29-.35.44-.52.15-.17.2-.29.3-.49.1-.2.05-.37-.02-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.08-.79.37-.27.29-1.04 1.01-1.04 2.47 0 1.46 1.06 2.87 1.21 3.07.15.2 2.08 3.17 5.04 4.45.7.3 1.25.48 1.68.62.71.22 1.36.19 1.87.11.57-.08 1.72-.7 1.97-1.38.24-.68.24-1.27.17-1.39-.08-.12-.27-.2-.56-.35Z" />
+</svg>
+                            </MagneticButton>
+                        </a>
+                    </div>
+
+                    <div className="absolute bottom-8 text-center w-full">
+                        <p className="font-mono text-xs text-textMuted tracking-widest uppercase">No forms. No waiting. Direct to the team.</p>
+                    </div>
+                </section>
+            );
+        };
+
+        // const Footer = () => (
+        //     <footer className="w-full bg-[#05070B] pt-20 pb-10 border-t border-white/5 overflow-hidden">
+        //         <div className="flex whitespace-nowrap mb-12">
+        //             <div className="animate-marquee flex gap-8 text-[8vw] font-display font-bold text-white/5 uppercase">
+        //                 {[...Array(4)].map((_, i) => (
+        //                     <React.Fragment key={i}>
+        //                         <span>Growth Architecture</span>
+        //                         <span className="text-brandBlue/20">•</span>
+        //                         <span>eCommerce Solutions</span>
+        //                         <span className="text-brandBlue/20">•</span>
+        //                         <span>Brand Development</span>
+        //                         <span className="text-brandBlue/20">•</span>
+        //                     </React.Fragment>
+        //                 ))}
+        //             </div>
+        //         </div>
+        //         <div className="max-w-7xl mx-auto px-6 flex flex flex-col md:flex-row justify-between items-end gap-8">
+        //             <div>
+        //                 <h2 className="text-4xl font-display font-bold text-white mb-4">Ecomify.</h2>
+        //                 <p className="text-textSec max-w-sm text-base">Building the future of digital commerce, one brand at a time.</p>
+        //             </div>
+        //             <div className="flex gap-6">
+        //                 <a href="https://www.instagram.com/ecomifymedia?igsh=enlxb3lsb29rYm84" target="_blank" className="font-mono text-sm text-textMuted hover:text-white transition-colors pointer-events-auto">INSTAGRAM</a>
+        //                 <a href="https://www.facebook.com/profile.php?id=61578374291170&mibextid=wwXIfr&mibextid=wwXIfr" target="_blank" className="font-mono text-sm text-textMuted hover:text-white transition-colors pointer-events-auto">FACEBOOK</a>
+        //             </div>
+        //         </div>
+        //         <div className="mt-12 text-center font-mono text-xs text-textMuted uppercase">
+        //             &copy; 2024 Ecomify Media. All Rights Reserved.
+        //         </div>
+        //     </footer>
+        // );
+
+const Footer = () => (
+    <footer className="w-full bg-[#05070B] pt-20 pb-10 border-t border-white/5 overflow-hidden">
+        <div className="flex whitespace-nowrap mb-12">
+            <div className="animate-marquee flex gap-8 text-[8vw] font-display font-bold text-white/5 uppercase">
+                {[...Array(4)].map((_, i) => (
+                    <React.Fragment key={i}>
+                        <span>Growth Architecture</span>
+                        <span className="text-brandBlue/20">•</span>
+                        <span>eCommerce Solutions</span>
+                        <span className="text-brandBlue/20">•</span>
+                        <span>Brand Development</span>
+                        <span className="text-brandBlue/20">•</span>
+                    </React.Fragment>
+                ))}
+            </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-12">
+
+            {/* Left */}
+            <div>
+                <h2 className="text-4xl font-display font-bold text-white mb-4">
+                    Ecomify.
+                </h2>
+
+                <p className="text-textSec max-w-sm text-base">
+                    Building the future of digital commerce, one brand at a time.
+                </p>
+
+                <div className="mt-8 space-y-3">
+                    <a
+                        href="mailto:contact@ecomifymedia.com"
+                        className="block text-sm text-textMuted hover:text-white transition-colors"
+                    >
+                        contact@ecomifymedia.com
+                    </a>
+
+                    <a
+                        href="mailto:info@ecomifymedia.com"
+                        className="block text-sm text-textMuted hover:text-white transition-colors"
+                    >
+                        info@ecomifymedia.com
+                    </a>
+
+                    <a
+                        href="mailto:support@ecomifymedia.com"
+                        className="block text-sm text-textMuted hover:text-white transition-colors"
+                    >
+                        support@ecomifymedia.com
+                    </a>
+                </div>
+            </div>
+
+            {/* Right */}
+            <div className="flex flex-col items-start md:items-end gap-4">
+                <span className="font-mono text-xs tracking-[0.25em] text-textMuted uppercase">
+                    Socials:
+                </span>
+
+                <div className="flex gap-6">
+                    <a
+                        href="https://www.instagram.com/ecomifymedia?igsh=enlxb3lsb29rYm84"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-mono text-sm text-textMuted hover:text-white transition-colors"
+                    >
+                        INSTAGRAM
+                    </a>
+
+                    <a
+                        href="https://www.facebook.com/profile.php?id=61578374291170&mibextid=wwXIfr"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-mono text-sm text-textMuted hover:text-white transition-colors"
+                    >
+                        FACEBOOK
+                    </a>
+                </div>
+            </div>
+
+        </div>
+
+        <div className="mt-12 pt-8 border-t border-white/5 text-center font-mono text-xs text-textMuted uppercase tracking-wider">
+            © 2023 Ecomify Media. All Rights Reserved.
+        </div>
+    </footer>
+);
+
+        const App = () => {
+            useSmoothScroll();
+            useEffect(() => {
+                if (typeof window !== 'undefined' && window.ScrollTrigger) {
+                    const timeout = setTimeout(() => {
+                        ScrollTrigger.refresh();
+                    }, 1000);
+                    return () => clearTimeout(timeout);
+                }
+            }, []);
+            
+            return (
+                <div className="bg-bgMain text-textMain selection:bg-brandBlue selection:text-white">
+                    <CustomCursor />
+                    <Navbar />
+                    <Hero />
+                    <PremiumServices />
+                    <ProofWall />
+                    <Results />
+                    <SectionDivider />
+                    <CaseStudies />
+                    <FinalCTA />
+                    <Footer />
+                    <FloatingWhatsApp />
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+    
+    <style>
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+            animation: marquee 20s linear infinite;
+        }
+        .animate-marquee:hover {
+  animation-play-state: paused;
+}
+    </style>
+</body>
+</html>
