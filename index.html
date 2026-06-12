@@ -16,14 +16,12 @@
 <meta name="author" content="Ecomify Media" />
     <title>Ecomify Media | eComm Growth Architecture</title>
   <link rel="icon" href="favicon.jpeg" />
-    <!-- React & ReactDOM -->
+   
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    
-    <!-- Babel -->
+
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- Tailwind CSS -->
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -55,10 +53,8 @@
         }
     </script>
 
-    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- GSAP & Lenis -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.29/bundled/lenis.min.js"></script>
@@ -67,7 +63,7 @@
         body {
             background-color: #090B10;
             color: #F8FAFC;
-            overflow-x: hidden; /* Strict prevention of horizontal scroll */
+            overflow-x: hidden;
             cursor: none;
             margin: 0;
             font-family: 'Inter', sans-serif;
@@ -75,7 +71,6 @@
             -moz-osx-font-smoothing: grayscale;
         }
 
-        /* Noise Overlay */
         .noise-overlay {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -85,7 +80,6 @@
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3Cfilter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
         }
 
-        /* PREMIUM CURSOR - Inversion Effect */
         #cursor {
             position: fixed;
             top: 0; left: 0;
@@ -108,10 +102,8 @@
             background-color: white;
         }
 
-        /* Hide Scrollbar */
         ::-webkit-scrollbar { width: 0px; background: transparent; }
 
-        /* Premium Service Row Specifics */
         .premium-service-row {
             background: transparent;
         }
@@ -141,7 +133,6 @@
     <script type="text/babel">
         const { useState, useEffect, useRef, useLayoutEffect } = React;
 
-        // --- HOOKS ---
 
         const useSmoothScroll = () => {
             useEffect(() => {
@@ -265,7 +256,6 @@
 
         // --- SECTIONS ---
 
-        // FIXED MOBILE NAV COMPONENT (USING BUTTON)
         const MorphingNavTrigger = ({ isOpen, setIsOpen }) => {
 
             const btnRef = useRef(null);
@@ -277,12 +267,10 @@
                 const l2 = line2.current;
                 if (!l1 || !l2) return;
 
-                // State Machine Logic for Morphing
                 const duration = 0.35;
                const ease = "power3.inOut";
 
                 if (isOpen) {
-                    // Morph to X
                    gsap.to(l1, {
     y: 5,
     rotation: 45,
@@ -318,7 +306,7 @@ gsap.to(l2, {
 }
             }, [isOpen]);
 
-            // Hover Animation
+           
             // const handleMouseEnter = () => {
             //     if (!isOpen) {
             //         gsap.to([l1, l2], { x: 2, duration: 0.3, ease: "power2.out" });
