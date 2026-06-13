@@ -14,14 +14,14 @@
 />
 
 <meta name="author" content="Ecomify Media" />
-    <title>Ecomify Media | eComm Growth Architecture</title>
+    <title>Ecomify Media | eCommerce Growth Architecture</title>
   <link rel="icon" href="favicon.jpeg" />
-   
+ 
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-
+    
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
+ 
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -53,8 +53,10 @@
         }
     </script>
 
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
+    <!-- GSAP & Lenis -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.29/bundled/lenis.min.js"></script>
@@ -63,7 +65,7 @@
         body {
             background-color: #090B10;
             color: #F8FAFC;
-            overflow-x: hidden;
+            overflow-x: hidden; /* Strict prevention of horizontal scroll */
             cursor: none;
             margin: 0;
             font-family: 'Inter', sans-serif;
@@ -71,6 +73,7 @@
             -moz-osx-font-smoothing: grayscale;
         }
 
+        /* Noise Overlay */
         .noise-overlay {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -102,8 +105,10 @@
             background-color: white;
         }
 
+        /* Hide Scrollbar */
         ::-webkit-scrollbar { width: 0px; background: transparent; }
 
+        /* Premium Service Row Specifics */
         .premium-service-row {
             background: transparent;
         }
@@ -114,8 +119,18 @@
                     background-color .45s ease,
                     transform .45s ease;
             }
+            
         }
+@media (hover: none), (pointer: coarse) {
 
+    body {
+        cursor: auto !important;
+    }
+
+    #cursor {
+        display: none !important;
+    }
+}
         .proof-item {
     will-change: transform;
 }
@@ -123,6 +138,9 @@
 .proof-item img {
     backface-visibility: hidden;
     transform: translateZ(0);
+}
+html {
+    overflow-x: hidden;
 }
     </style>
 </head>
@@ -133,6 +151,7 @@
     <script type="text/babel">
         const { useState, useEffect, useRef, useLayoutEffect } = React;
 
+        // --- HOOKS ---
 
         const useSmoothScroll = () => {
             useEffect(() => {
@@ -143,35 +162,82 @@
             }, []);
         };
 
-        const useCursor = () => {
-            const cursorRef = useRef(null);
-            useEffect(() => {
-                const cursor = cursorRef.current;
-                if(!cursor) return;
+        // const useCursor = () => {
+        //     const cursorRef = useRef(null);
+        //     useEffect(() => {
+        //         const cursor = cursorRef.current;
+        //         if(!cursor) return;
                 
-                const moveCursor = (e) => {
-                    cursor.style.transform = `translate(${e.clientX}px, ${e.clientY}px) translate(-50%, -50%)`;
-                };
+        //         const moveCursor = (e) => {
+        //             cursor.style.transform = `translate(${e.clientX}px, ${e.clientY}px) translate(-50%, -50%)`;
+        //         };
 
-                const handleMouseOver = (e) => {
-                    const target = e.target.closest('a, button, .hover-trigger, .premium-service-row');
-                    if (target) {
-                        cursor.classList.add('hovered');
-                    } else {
-                        cursor.classList.remove('hovered');
-                    }
-                };
+        //         const handleMouseOver = (e) => {
+        //             const target = e.target.closest('a, button, .hover-trigger, .premium-service-row');
+        //             if (target) {
+        //                 cursor.classList.add('hovered');
+        //             } else {
+        //                 cursor.classList.remove('hovered');
+        //             }
+        //         };
 
-                window.addEventListener('mousemove', moveCursor);
-                window.addEventListener('mouseover', handleMouseOver);
-                return () => {
-                    window.removeEventListener('mousemove', moveCursor);
-                    window.removeEventListener('mouseover', handleMouseOver);
-                };
-            }, []);
-            return cursorRef;
+        //         window.addEventListener('mousemove', moveCursor);
+        //         window.addEventListener('mouseover', handleMouseOver);
+        //         return () => {
+        //             window.removeEventListener('mousemove', moveCursor);
+        //             window.removeEventListener('mouseover', handleMouseOver);
+        //         };
+        //     }, []);
+        //     return cursorRef;
+        // };
+const useCursor = () => {
+    const cursorRef = useRef(null);
+
+    useEffect(() => {
+        const isTouchDevice =
+            window.matchMedia("(hover: none)").matches ||
+            navigator.maxTouchPoints > 0;
+
+        const cursor = cursorRef.current;
+
+        if (!cursor) return;
+
+        // Mobile & tablet
+        if (isTouchDevice) {
+            cursor.style.display = "none";
+            document.body.style.cursor = "auto";
+            return;
+        }
+
+        // Desktop only
+        const moveCursor = (e) => {
+            cursor.style.transform =
+                `translate(${e.clientX}px, ${e.clientY}px) translate(-50%, -50%)`;
         };
 
+        const handleMouseOver = (e) => {
+            const target = e.target.closest(
+                "a, button, .hover-trigger, .premium-service-row"
+            );
+
+            if (target) {
+                cursor.classList.add("hovered");
+            } else {
+                cursor.classList.remove("hovered");
+            }
+        };
+
+        window.addEventListener("mousemove", moveCursor);
+        window.addEventListener("mouseover", handleMouseOver);
+
+        return () => {
+            window.removeEventListener("mousemove", moveCursor);
+            window.removeEventListener("mouseover", handleMouseOver);
+        };
+    }, []);
+
+    return cursorRef;
+};
         const CustomCursor = () => {
             const cursorRef = useCursor();
             return <div ref={cursorRef} id="cursor" />;
@@ -256,6 +322,7 @@
 
         // --- SECTIONS ---
 
+        // FIXED MOBILE NAV COMPONENT (USING BUTTON)
         const MorphingNavTrigger = ({ isOpen, setIsOpen }) => {
 
             const btnRef = useRef(null);
@@ -267,10 +334,12 @@
                 const l2 = line2.current;
                 if (!l1 || !l2) return;
 
+                // State Machine Logic for Morphing
                 const duration = 0.35;
                const ease = "power3.inOut";
 
                 if (isOpen) {
+                    // Morph to X
                    gsap.to(l1, {
     y: 5,
     rotation: 45,
@@ -306,7 +375,7 @@ gsap.to(l2, {
 }
             }, [isOpen]);
 
-           
+            // Hover Animation
             // const handleMouseEnter = () => {
             //     if (!isOpen) {
             //         gsap.to([l1, l2], { x: 2, duration: 0.3, ease: "power2.out" });
@@ -919,17 +988,18 @@ const handleMouseLeave = () => {
         >
             <div className="max-w-7xl mx-auto px-6 mb-16 flex justify-between items-end">
                 <div>
-                    <p className="font-mono text-xs tracking-[0.3em] text-brandBlue uppercase mb-4">
-                        Social Proof
-                    </p>
+                 
+                    
 
-                    <h2 className="text-4xl md:text-6xl font-display font-bold text-white">
-                        Real Client Results.
-                    </h2>
+<h2 className="text-4xl md:text-6xl font-display font-bold text-white">
+    Real Conversations.
+    <br />
+    Real Results.
+</h2>
                 </div>
 
                 <p className="font-mono text-brandBlue hidden md:block">
-                    REAL CONVERSATIONS. REAL RESULTS.
+                    See what our clients are saying about working with us. NO FILTERS.
                 </p>
             </div>
 
@@ -1021,8 +1091,8 @@ const AnimatedCounter = ({ value, suffix = "", duration = 2.5, prefix = "" }) =>
 
         const Results = () => {
             const stats = [
-                { val: 40, suffix: "+", label: "Projects Delivered" },
-                { val: 1.8, suffix: "M+", label: "Total Revenue Generated", prefix: "$" }, 
+                { val: 1000, suffix: "+", label: "AD Accounts Delivered" },
+                { val: 5.2, suffix: "CR+", label: "Total Revenue Generated", }, 
                 { val: 100, suffix: "%", label: "Focus On Growth" }
             ];
 
@@ -1041,16 +1111,40 @@ const AnimatedCounter = ({ value, suffix = "", duration = 2.5, prefix = "" }) =>
                 </section>
             );
         };
+const SectionDivider = () => {
+    const dividerRef = React.useRef(null);
 
-        const SectionDivider = () => (
-            <div className="w-full py-8 bg-brandBlue overflow-hidden flex items-center border-y border-white/10">
-                <div className="animate-marquee flex whitespace-nowrap">
-                    {[...Array(10)].map((_, i) => (
-                        <span key={i} className="text-4xl font-display font-bold text-white mx-8 tracking-wider">8 FIGURES IN SALES • PROVEN RESULTS • GLOBAL IMPACT • TRUSTED BY 1K+ CLIENTS •  </span>
-                    ))}
-                </div>
+    React.useEffect(() => {
+        gsap.to(dividerRef.current, {
+            x: -150,
+            ease: "none",
+            scrollTrigger: {
+                trigger: dividerRef.current,
+                start: "top bottom",
+                end: "bottom top",
+                scrub: 1.5
+            }
+        });
+    }, []);
+
+    return (
+        <div className="w-full py-8 bg-brandBlue overflow-hidden flex items-center border-y border-white/10">
+            <div
+                ref={dividerRef}
+                className="flex whitespace-nowrap will-change-transform"
+            >
+                {[...Array(10)].map((_, i) => (
+                    <span
+                        key={i}
+                        className="text-4xl font-display font-bold text-white mx-8 tracking-wider"
+                    >
+                      TIKTOK & META ADS • LEAD GENERATION • ECOMMERCE GROWTH • TIKTOK & META ADS • LEAD GENERATION • ECOMMERCE GROWTH
+                    </span>
+                ))}
             </div>
-        );
+        </div>
+    );
+};
 
         // --- REVERTED & WORKING CASE STUDIES SECTION ---
         
@@ -1080,7 +1174,7 @@ const AnimatedCounter = ({ value, suffix = "", duration = 2.5, prefix = "" }) =>
                             </div>
                             <div className="absolute bottom-0 left-0 w-1/2 h-1/3 bg-brandBlue/10 backdrop-blur-md border border-white/5 rounded-xl p-5 flex flex-col justify-center z-20">
                                 <div className="text-xs font-mono text-textSec mb-1">Total ROAS</div>
-                                <div className="text-4xl font-display font-bold text-white">3.8x</div>
+                                <div className="text-4xl font-display font-bold text-white">8.2x</div>
                             </div>
                         </>
                     )}
@@ -1131,7 +1225,7 @@ const AnimatedCounter = ({ value, suffix = "", duration = 2.5, prefix = "" }) =>
                                 </div>
                             </div>
                             <div className="absolute bottom-0 left-10 w-1/3 h-1/4 bg-brandGreen/10 backdrop-blur-md border border-brandGreen/20 rounded-xl flex items-center justify-center gap-3 z-20">
-                                <div className="text-2xl font-bold text-white">$84k</div>
+                                <div className="text-2xl font-bold text-white">PKR 84k</div>
                                 <div className="text-xs font-mono text-brandGreen">MO</div>
                             </div>
                         </>
@@ -1221,9 +1315,9 @@ const AnimatedCounter = ({ value, suffix = "", duration = 2.5, prefix = "" }) =>
                                             const str = m.value;
                                             let val, prefix = "", suffix = "";
                                             
-                                            if (str.startsWith('$')) {
-                                                prefix = "$";
-                                                const numPart = str.slice(1);
+                                            if (str.startsWith('PKR')) {
+                                                prefix = "PKR ";
+                                                const numPart = str.slice(3);
                                                 if (numPart.endsWith('k')) {
                                                     val = parseFloat(numPart);
                                                     suffix = "k";
@@ -1277,7 +1371,7 @@ const AnimatedCounter = ({ value, suffix = "", duration = 2.5, prefix = "" }) =>
                     problem: "No consistent acquisition system. Traffic was erratic and ad spend was inefficient.",
                     solution: "Store optimization + Meta ads scaling. We rebuilt the funnel and implemented a structured testing framework.",
                     metrics: [
-                        { value: "3.8x", label: "ROAS" },
+                        { value: "8.2x", label: "ROAS" },
                         { value: "+217%", label: "Revenue" }
                     ],
                     tags: ["Fashion", "Meta Ads", "Shopify", "6 Months"],
@@ -1302,7 +1396,7 @@ const AnimatedCounter = ({ value, suffix = "", duration = 2.5, prefix = "" }) =>
                     solution: "Creative testing system and paid acquisition. Rotated creatives weekly to combat fatigue.",
                     metrics: [
                         { value: "+312%", label: "Revenue" },
-                        { value: "$84k", label: "Mo. Rev" }
+                        { value: "PKR84k", label: "Mo. Rev" }
                     ],
                     tags: ["General Store", "TikTok", "Strategy", "8 Months"],
                     visualType: "line"
