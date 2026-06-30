@@ -910,139 +910,316 @@ const handleMouseLeave = () => {
 //         </section>
 //     );
 // };
-        const ProofWall = () => {
-    const containerRef = useRef(null);
+    const ProofWall = () => {
+        const sectionRef = useRef(null);
+        const pinWrapRef = useRef(null);
+        const trackRef = useRef(null);
+        const progressRef = useRef(null);
+        const scrollTweenRef = useRef(null);
+        const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-    const reviews = [
-        "public/reviews/review1.jpeg",
-        "public/reviews/review2.jpeg",
-        "public/reviews/review3.jpeg",
-        "public/reviews/review4.jpeg",
-        "public/reviews/review6.jpeg",
-        "public/reviews/review7.jpeg",
-        "public/reviews/review8.jpeg",
-    ];
+        const reviews = [
+            "public/reviews/review1.jpeg",
+            "public/reviews/review2.jpeg",
+            "public/reviews/review3.jpeg",
+            // "public/reviews/review4.jpeg",
+            // "public/reviews/review6.jpeg",
+            "public/reviews/review7.jpeg",
+            // "public/reviews/review8.jpeg",
+        ];
 
-    useLayoutEffect(() => {
-        const el = containerRef.current;
-        if (!el) return;
+        const getCardWidth = () => Math.min(window.innerWidth * 0.38, 520);
 
-        const items = el.querySelectorAll(".proof-item");
+        useEffect(() => {
+            let rafId;
+            const onResize = () => {
+                cancelAnimationFrame(rafId);
+                rafId = requestAnimationFrame(() => {
+                    setIsMobile(window.innerWidth < 768);
+                });
+            };
+            window.addEventListener("resize", onResize);
+            return () => {
+                window.removeEventListener("resize", onResize);
+                cancelAnimationFrame(rafId);
+            };
+        }, []);
 
-        // Reveal animation
-        gsap.fromTo(
-            items,
-            {
-                clipPath: "inset(0 0 100% 0)",
-                y: 40,
-            },
-            {
-                clipPath: "inset(0 0 0% 0)",
-                y: 0,
-                stagger: 0.12,
-                duration: 1.2,
-                ease: "power3.out",
-                scrollTrigger: {
-                    trigger: el,
-                    start: "top 85%",
-                    toggleActions: "play none none reverse",
-                },
-            }
-        );
+        useLayoutEffect(() => {
+            const section = sectionRef.current;
+            const pinWrap = pinWrapRef.current;
+            const track = trackRef.current;
+            if (!section || !pinWrap || !track) return;
 
-        // Parallax drift
-        items.forEach((item, i) => {
-            const offset = i % 2 === 0 ? 25 : -25;
+            const ctx = gsap.context(() => {
+                if (isMobile) {
+                    gsap.fromTo(
+                        track.querySelectorAll(".review-card"),
+                        { opacity: 0, x: 30 },
+                        {
+                            opacity: 1,
+                            x: 0,
+                            stagger: 0.06,
+                            duration: 0.5,
+                            ease: "power2.out",
+                            scrollTrigger: {
+                                trigger: section,
+                                start: "top 90%",
+                            },
+                        }
+                    );
+                } else {
+                    const cardW = getCardWidth();
+                    const gap = 28;
+                    const pl = window.innerWidth >= 1024 ? 56 : 32;
+                    const pr = 56;
+                    const numItems = reviews.length + 1;
+                    const totalTrackWidth = pl + numItems * cardW + (numItems - 1) * gap + pr;
+                    const totalScroll = Math.max(0, totalTrackWidth - window.innerWidth);
 
-            gsap.to(item, {
-                y: offset,
-                ease: "none",
-                scrollTrigger: {
-                    trigger: item,
-                    start: "top bottom",
-                    end: "bottom top",
-                    scrub: 1,
-                },
-            });
-        });
+                    if (totalScroll <= 0) return;
 
-        return () => {
-            ScrollTrigger.getAll().forEach((st) => st.kill());
-        };
-    }, []);
+                    scrollTweenRef.current = gsap.to(track, {
+                        x: -totalScroll,
+                        ease: "none",
+                        scrollTrigger: {
+                            trigger: pinWrap,
+                            start: "top top",
+                            end: () => `+=${totalScroll}`,
+                            scrub: 1,
+                            pin: true,
+                            anticipatePin: 1,
+                            invalidateOnRefresh: true,
+                        },
+                    });
 
-    const handleMouseMove = (e) => {
-        const rect = e.currentTarget.getBoundingClientRect();
+                    track.querySelectorAll(".review-card").forEach((card, i) => {
+                        const img = card.querySelector("img");
+                        if (img) {
+                            gsap.fromTo(
+                                img,
+                                { xPercent: -5 },
+                                {
+                                    xPercent: 5,
+                                    ease: "none",
+                                    scrollTrigger: {
+                                        trigger: card,
+                                        start: "left right",
+                                        end: "right left",
+                                        containerAnimation: scrollTweenRef.current,
+                                        scrub: true,
+                                    },
+                                }
+                            );
+                        }
 
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+                        gsap.fromTo(
+                            card,
+                            {
+                                opacity: 0,
+                                y: i % 2 === 0 ? 16 : -10,
+                                scale: 0.97,
+                            },
+                            {
+                                opacity: 1,
+                                y: 0,
+                                scale: 1,
+                                ease: "power2.out",
+                                scrollTrigger: {
+                                    trigger: card,
+                                    start: "left 90%",
+                                    end: "left 55%",
+                                    containerAnimation: scrollTweenRef.current,
+                                    scrub: true,
+                                },
+                            }
+                        );
+                    });
 
-        e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
-        e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
-    };
+                    if (progressRef.current) {
+                        gsap.fromTo(
+                            progressRef.current,
+                            { scaleX: 0 },
+                            {
+                                scaleX: 1,
+                                ease: "none",
+                                scrollTrigger: {
+                                    trigger: pinWrap,
+                                    start: "top top",
+                                    end: () => `+=${totalScroll}`,
+                                    scrub: true,
+                                },
+                            }
+                        );
+                    }
+                }
+            }, section);
 
-    return (
-        <section
-            ref={containerRef}
-            className="relative w-full py-32 bg-bgMain border-t border-white/5"
-        >
-            <div className="max-w-7xl mx-auto px-6 mb-16 flex justify-between items-end">
-                <div>
-                 
-                    
+            return () => ctx.revert();
+        }, [isMobile]);
 
-<h2 className="text-4xl md:text-6xl font-display font-bold text-white">
-    Real Conversations.
-    <br />
-    Real Results.
-</h2>
+        const cardW = !isMobile ? getCardWidth() : null;
+
+        return (
+            <section
+                ref={sectionRef}
+                className="relative w-full bg-bgMain border-t border-white/5"
+            >
+                <div className="max-w-7xl mx-auto px-6 pt-28 md:pt-36 pb-10 md:pb-14">
+                    <p className="font-mono text-[10px] tracking-[0.3em] text-brandBlue uppercase mb-3">
+                        Social Proof
+                    </p>
+                    <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white leading-[1.05] tracking-tight">
+                        Real Conversations.
+                        <br />
+                        Real Results.
+                    </h2>
+                    <p className="mt-4 font-mono text-[11px] text-textMuted tracking-wide leading-relaxed max-w-xs">
+                        Unfiltered client conversations — no cherry-picking, no edits.
+                    </p>
                 </div>
 
-                <p className="font-mono text-brandBlue hidden md:block">
-                    See what our clients are saying about working with us. NO FILTERS.
-                </p>
-            </div>
+                <div
+                    ref={pinWrapRef}
+                    className={
+                        isMobile
+                            ? "reviews-scroll relative overflow-x-auto overflow-y-hidden"
+                            : "relative overflow-hidden flex items-center h-screen"
+                    }
+                    style={
+                        isMobile
+                            ? {
+                                WebkitOverflowScrolling: "touch",
+                                scrollbarWidth: "none",
+                                msOverflowStyle: "none",
+                            }
+                            : undefined
+                    }
+                >
+                    {!isMobile && (
+                        <>
+                            <div className="absolute left-0 top-0 bottom-0 w-28 bg-gradient-to-r from-bgMain via-bgMain/60 to-transparent z-10 pointer-events-none" />
+                            <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-bgMain via-bgMain/60 to-transparent z-10 pointer-events-none" />
+                        </>
+                    )}
 
-            <div className="max-w-7xl mx-auto px-6 columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
-                {reviews.map((src, i) => (
-                    <div
-                        key={i}
-                        className="proof-item break-inside-avoid mb-6 will-change-transform"
-                    >
-                        <div
-                            className="group relative overflow-hidden rounded-3xl border border-white/10 bg-elevated shadow-2xl"
-                            onMouseMove={handleMouseMove}
-                        >
-                            {/* Spotlight */}
+                    {!isMobile && (
+                        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-white/[0.04] z-20">
                             <div
-                                className="
-                                    pointer-events-none
-                                    absolute
-                                    inset-0
-                                    opacity-0
-                                    transition-opacity
-                                    duration-500
-                                    group-hover:opacity-100
-                                "
-                                style={{
-                                    background:
-                                        "radial-gradient(300px circle at var(--mouse-x) var(--mouse-y), rgba(255,255,255,0.08), transparent 60%)",
-                                }}
-                            />
-
-                            <img
-                                src={src}
-                                alt={`Client review ${i + 1}`}
-                                loading="lazy"
-                                className="block w-full h-auto select-none"
+                                ref={progressRef}
+                                className="h-full w-full bg-brandBlue/50 origin-left scale-x-0 will-change-transform"
                             />
                         </div>
+                    )}
+
+                    <div
+                        ref={trackRef}
+                        className={
+                            isMobile
+                                ? "flex gap-4 px-6 pb-4"
+                                : "flex gap-7 pl-8 lg:pl-14 pr-8 pb-8"
+                        }
+                        style={
+                            !isMobile
+                                ? { width: "max-content", willChange: "transform" }
+                                : isMobile
+                                ? { scrollSnapType: "x mandatory" }
+                                : undefined
+                        }
+                    >
+                        {reviews.map((src, i) => (
+                            <div
+                                key={i}
+                                className="review-card flex-shrink-0 group"
+                                style={
+                                    !isMobile
+                                        ? { width: `${cardW}px` }
+                                        : { width: "80vw", scrollSnapAlign: "start" }
+                                }
+                            >
+                                <div
+                                    className="relative overflow-hidden rounded-2xl md:rounded-3xl border border-white/[0.06] bg-elevated shadow-none group-hover:shadow-[0_0_60px_-15px_rgba(37,99,235,0.12)] transition-shadow duration-700"
+                                    style={{ aspectRatio: "4/3" }}
+                                >
+                                    <img
+                                        src={src}
+                                        alt={`Client review ${i + 1}`}
+                                        loading="lazy"
+                                        decoding="async"
+                                        className="w-full h-full object-cover object-center select-none will-change-transform"
+                                    />
+
+                                    <div className="absolute inset-0 bg-gradient-to-b from-black/15 via-transparent to-transparent pointer-events-none" />
+
+                                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent px-5 py-4 pt-10 pointer-events-none">
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-mono text-[10px] text-white/30 tracking-widest uppercase">
+                                                Review
+                                            </span>
+                                            <span className="font-mono text-[11px] text-white/20 tabular-nums">
+                                                {String(i + 1).padStart(2, "0")}/{String(reviews.length).padStart(2, "0")}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="absolute inset-0 rounded-2xl md:rounded-3xl border border-brandBlue/0 group-hover:border-brandBlue/20 transition-colors duration-500 pointer-events-none" />
+                                </div>
+                            </div>
+                        ))}
+
+                        <div
+                            className="review-card flex-shrink-0"
+                            style={
+                                !isMobile
+                                    ? { width: `${cardW}px` }
+                                    : { width: "80vw", scrollSnapAlign: "start" }
+                            }
+                        >
+                            <a
+                                href="reviews.html"
+                                className="block w-full rounded-2xl md:rounded-3xl border border-dashed border-white/[0.08] bg-white/[0.015] hover:bg-white/[0.04] hover:border-brandBlue/20 transition-all duration-500 group/vm flex flex-col items-center justify-center gap-5"
+                                style={{ aspectRatio: "4/3" }}
+                            >
+                                <div className="w-14 h-14 rounded-full border border-white/[0.08] flex items-center justify-center group-hover/vm:border-brandBlue/30 group-hover/vm:bg-brandBlue/[0.06] transition-all duration-500">
+                                    <svg
+                                        className="w-5 h-5 text-white/30 group-hover/vm:text-brandBlue transition-colors duration-500"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth="1.5"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                    </svg>
+                                </div>
+                                <div className="text-center px-4">
+                                    <p className="text-white/50 font-display font-semibold text-lg md:text-xl group-hover/vm:text-white transition-colors duration-500">
+                                        View All Reviews
+                                    </p>
+                                    <p className="font-mono text-[10px] text-white/20 tracking-widest uppercase mt-2">
+                                        {reviews.length}+ conversations
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2 text-brandBlue/50 group-hover/vm:text-brandBlue group-hover/vm:gap-3 transition-all duration-500 mt-2">
+                                    <span className="font-mono text-[11px] tracking-wider">EXPLORE</span>
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" />
+                                    </svg>
+                                </div>
+                            </a>
+                        </div>
                     </div>
-                ))}
-            </div>
-        </section>
-    );
-};
+                </div>
+
+                <div className="max-w-7xl mx-auto px-6 pt-6 pb-28 md:pb-36 flex justify-start md:justify-center">
+                    <a href="reviews.html">
+                        <MagneticButton brandGreen>
+                            See All Reviews
+                        </MagneticButton>
+                    </a>
+                </div>
+            </section>
+        );
+    };
 
 const AnimatedCounter = ({ value, suffix = "", duration = 2.5, prefix = "" }) => {
             const elementRef = useRef(null);
